@@ -663,7 +663,7 @@ btnSubmit.addEventListener('click', async () => {
       photoDataUrl: state.photoBase64,
       signatureDataUrl: state.signBase64,
     });
-    const filename = `${dateStamp}_${safePlate}_材料.pdf`;
+    const filename = `${dateStamp}_${safePlate}_material.pdf`;
     btnSubmit.textContent = '上傳確認書中…';
     pdfUrl = await uploadPdfToSupabase(pdfBlob, filename);
   }catch(err){
