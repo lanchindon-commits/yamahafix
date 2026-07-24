@@ -648,6 +648,8 @@ btnSubmit.addEventListener('click', async () => {
   const registeredAtText = now.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
   const dateStamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
   const plateValue = fPlate.value.trim();
+  // 淨化車牌文字，移除emoji/符號等Supabase檔名不允許的字元，只保留字母/數字/中文/底線/連字號
+  const safePlate = plateValue.replace(/[^\p{L}\p{N}_-]/gu, '') || 'NA';
 
   let pdfUrl = '';
   try{
@@ -661,7 +663,7 @@ btnSubmit.addEventListener('click', async () => {
       photoDataUrl: state.photoBase64,
       signatureDataUrl: state.signBase64,
     });
-    const filename = `${dateStamp}_${plateValue}_材料.pdf`;
+    const filename = `${dateStamp}_${safePlate}_材料.pdf`;
     btnSubmit.textContent = '上傳確認書中…';
     pdfUrl = await uploadPdfToSupabase(pdfBlob, filename);
   }catch(err){
