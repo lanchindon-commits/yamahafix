@@ -373,6 +373,11 @@
           <input type="checkbox" id="f-agree">
           <span>我已詳閱並同意上方聲明內容，確認以上資料填寫屬實。</span>
         </label>
+
+        <div class="field" style="margin-top:16px;">
+          <label>備註</label>
+          <input type="text" id="f-note" placeholder="選填，如有特殊狀況可補充說明">
+        </div>
       </section>
 
       <!-- SUCCESS -->
@@ -659,6 +664,7 @@ btnSubmit.addEventListener('click', async () => {
     plate: plateValue,
     registeredAt: registeredAtISO,
     pdfUrl: pdfUrl,
+    note: document.getElementById('f-note').value.trim(),
   };
 
   try{
