@@ -442,6 +442,8 @@ document.querySelectorAll('.product-card').forEach(card => {
 btnNext1.addEventListener('click', () => {
   document.getElementById('declareItem').textContent = state.product;
   showScreen('step2');
+  // 切換到第二頁後，畫布才是可見狀態，此時重新計算尺寸簽名板才能正常運作
+  requestAnimationFrame(resizeCanvas);
 });
 btnBack.addEventListener('click', () => showScreen('step1'));
 
