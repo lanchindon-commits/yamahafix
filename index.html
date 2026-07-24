@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
     --bg:#F5F2EC;
@@ -396,6 +398,9 @@
 /* ========= 設定區：請填入實際值 ========= */
 const LIFF_ID = "2010832825-0QBvwjPr";
 const WEBHOOK_URL = "https://hook.us2.make.com/vazgx558zws9wmnkzfwbsdtwa90bde85";
+const SUPABASE_URL = "https://hxzdmosganinyhtrswlj.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4emRtb3NnYW5pbnlodHJzd2xqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NjM4MjUsImV4cCI6MjA5ODMzOTgyNX0.78x8GhEP4vqy4rUEVBuihl2JP5u_fLLpKQTgH6wWJWg";
+const SUPABASE_BUCKET = "YAMAHA_FIX_PDF";
 /* ======================================== */
 
 const state = {
@@ -529,12 +534,120 @@ function validateForm(){
   btnSubmit.disabled = !ok;
 }
 
+/* ---- 產生確認書 PDF（瀏覽器端 jsPDF + html2canvas） ---- */
+async function generateConfirmationPDF({ store, name, phone, plate, product, registeredAtText, photoDataUrl, signatureDataUrl }){
+  const { jsPDF } = window.jspdf;
+
+  const div = document.createElement('div');
+  div.style.cssText = 'width:700px;padding:48px 56px 80px 56px;font-family:"Microsoft JhengHei","PingFang TC",Arial,sans-serif;background:#fff;position:fixed;left:-9999px;top:0;font-size:14px;line-height:1.8;color:#1a1a1a;';
+  div.innerHTML = `
+    <h2 style="text-align:center;color:#8F1420;font-size:20px;margin:0 0 4px;letter-spacing:1px;">YAMAHA 原廠部品更換登記確認書</h2>
+    <hr style="border:2px solid #1D2B3A;margin:16px 0 20px;">
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+      <tr><td style="padding:8px 12px;background:#f4f2ec;font-weight:bold;border:1px solid #ccc;width:30%;">店家</td><td style="padding:8px 12px;border:1px solid #ccc;">${store}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f4f2ec;font-weight:bold;border:1px solid #ccc;">日期</td><td style="padding:8px 12px;border:1px solid #ccc;">${registeredAtText}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f4f2ec;font-weight:bold;border:1px solid #ccc;">姓名</td><td style="padding:8px 12px;border:1px solid #ccc;">${name}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f4f2ec;font-weight:bold;border:1px solid #ccc;">電話</td><td style="padding:8px 12px;border:1px solid #ccc;">${phone}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f4f2ec;font-weight:bold;border:1px solid #ccc;">車牌</td><td style="padding:8px 12px;border:1px solid #ccc;">${plate}</td></tr>
+    </table>
+
+    <h4 style="color:#1D2B3A;margin:0 0 8px;font-size:15px;">召修內容</h4>
+    <div style="font-size:13.5px;margin-bottom:16px;">
+      <div style="padding:4px 0;"><span style="display:inline-block;width:16px;height:16px;border:1.5px solid #1a1a1a;text-align:center;line-height:14px;font-size:11px;font-weight:bold;margin-right:8px;">${product === 'CCU接收器' ? '✓' : ''}</span>CCU 接收器</div>
+      <div style="padding:4px 0;"><span style="display:inline-block;width:16px;height:16px;border:1.5px solid #1a1a1a;text-align:center;line-height:14px;font-size:11px;font-weight:bold;margin-right:8px;">${product === '七代勁戰儀表' ? '✓' : ''}</span>七代勁戰儀表</div>
+    </div>
+
+    <div style="background:#FFF9EC;border:1.5px solid #F0DFAE;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:1.9;color:#5A4A1E;">
+      本人已了解上述車輛因原廠內召修需求，需更換「<b>${product}</b>」，並同意由店家協助登記預定材料，待材料到貨後由店家通知安排更換作業。
+    </div>
+
+    <div style="border-top:2px dashed #c5c0b4;padding-top:16px;">
+      <div style="display:flex;gap:20px;">
+        <div style="flex:1;background:#f9f8f5;border:1.5px solid #E3DFD6;border-radius:8px;padding:14px;text-align:center;">
+          <p style="font-size:12px;color:#8F1420;font-weight:bold;letter-spacing:2px;margin:0 0 10px;">行 照 照 片</p>
+          <div style="background:#fff;border:1px solid #dde4f0;border-radius:6px;overflow:hidden;width:200px;height:140px;margin:0 auto;display:flex;align-items:center;justify-content:center;">
+            <img src="${photoDataUrl}" style="width:200px;height:140px;object-fit:cover;display:block;">
+          </div>
+        </div>
+        <div style="flex:1;background:#f9f8f5;border:1.5px solid #E3DFD6;border-radius:8px;padding:14px;text-align:center;">
+          <p style="font-size:12px;color:#8F1420;font-weight:bold;letter-spacing:2px;margin:0 0 10px;">客 戶 簽 名</p>
+          <div style="background:#fff;border:1px solid #dde4f0;border-radius:6px;overflow:hidden;width:200px;height:140px;margin:0 auto;display:flex;align-items:center;justify-content:center;">
+            <img src="${signatureDataUrl}" style="width:200px;height:140px;object-fit:contain;display:block;">
+          </div>
+          <p style="font-size:10px;color:#aaa;margin:8px 0 0;">簽署日期：${registeredAtText}</p>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(div);
+  try{
+    const canvas = await html2canvas(div, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+    document.body.removeChild(div);
+
+    const pdfW = 210;
+    const pdfH = (canvas.height * pdfW) / canvas.width;
+    const pdf = new jsPDF('p', 'mm', [pdfW, pdfH]);
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pdfW, pdfH);
+
+    return pdf.output('blob');
+  }catch(err){
+    if(document.body.contains(div)) document.body.removeChild(div);
+    throw err;
+  }
+}
+
+/* ---- 上傳 PDF 到 Supabase Storage，回傳公開網址 ---- */
+async function uploadPdfToSupabase(pdfBlob, filename){
+  const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${filename}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/pdf',
+      'x-upsert': 'true',
+    },
+    body: pdfBlob,
+  });
+  if(!uploadRes.ok) throw new Error('Supabase 上傳失敗: ' + await uploadRes.text());
+  return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${filename}`;
+}
+
 /* ---- 送出 ---- */
 btnSubmit.addEventListener('click', async () => {
   btnSubmit.disabled = true;
-  btnSubmit.textContent = '送出中…';
+  btnSubmit.textContent = '產生確認書中…';
 
   state.signBase64 = canvas.toDataURL('image/png');
+
+  const now = new Date();
+  const registeredAtISO = now.toISOString();
+  const registeredAtText = now.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
+  const dateStamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const plateValue = fPlate.value.trim();
+
+  let pdfUrl = '';
+  try{
+    const pdfBlob = await generateConfirmationPDF({
+      store: fStore.value,
+      name: fName.value.trim(),
+      phone: fPhone.value.trim(),
+      plate: plateValue,
+      product: state.product,
+      registeredAtText,
+      photoDataUrl: state.photoBase64,
+      signatureDataUrl: state.signBase64,
+    });
+    const filename = `${dateStamp}_${plateValue}_材料.pdf`;
+    btnSubmit.textContent = '上傳確認書中…';
+    pdfUrl = await uploadPdfToSupabase(pdfBlob, filename);
+  }catch(err){
+    console.error('PDF 產生或上傳失敗', err);
+    alert('確認書 PDF 產生失敗，請確認網路連線後再試一次。');
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = '送出登記';
+    return;
+  }
+
+  btnSubmit.textContent = '送出中…';
 
   const payload = {
     lineUserId: state.lineUserId,
@@ -543,10 +656,9 @@ btnSubmit.addEventListener('click', async () => {
     store: fStore.value,
     name: fName.value.trim(),
     phone: fPhone.value.trim(),
-    plate: fPlate.value.trim(),
-    registeredAt: new Date().toISOString(),
-    licensePhoto: state.photoBase64,
-    signature: state.signBase64,
+    plate: plateValue,
+    registeredAt: registeredAtISO,
+    pdfUrl: pdfUrl,
   };
 
   try{
@@ -564,7 +676,7 @@ btnSubmit.addEventListener('click', async () => {
     <div><span>更換項目</span><span>${state.product}</span></div>
     <div><span>登記店家</span><span>${fStore.value}</span></div>
     <div><span>客戶姓名</span><span>${fName.value.trim()}</span></div>
-    <div><span>車牌號碼</span><span>${fPlate.value.trim()}</span></div>
+    <div><span>車牌號碼</span><span>${plateValue}</span></div>
   `;
   showScreen('success');
 });
