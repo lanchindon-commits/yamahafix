@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>YAMAHA 內召修登記</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{
+    --bg:#F5F2EC;
+    --surface:#FFFFFF;
+    --ink:#1B1B1D;
+    --ink-soft:#63605B;
+    --line:#E3DFD6;
+    --accent:#C81E2C;
+    --accent-dark:#8F1420;
+    --navy:#1D2B3A;
+    --ok:#1F7A5C;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Noto Sans TC', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .num{font-family:'Oswald',sans-serif;}
+
+  /* App shell */
+  #app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;}
+
+  header.topbar{
+    padding:18px 20px 14px;
+    border-bottom:3px solid var(--navy);
+    background:var(--navy);
+    color:#fff;
+  }
+  header.topbar .brand{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.14em;
+    color:#C9CFD8;
+    text-transform:uppercase;
+  }
+  header.topbar h1{
+    margin:4px 0 0;
+    font-size:20px;
+    font-weight:900;
+    letter-spacing:.02em;
+  }
+
+  .steps-track{
+    display:flex;
+    gap:8px;
+    padding:14px 20px 0;
+  }
+  .steps-track .seg{
+    flex:1;
+    height:4px;
+    border-radius:2px;
+    background:var(--line);
+  }
+  .steps-track .seg.active{background:var(--accent);}
+  .steps-track .seg.done{background:var(--navy);}
+
+  main{flex:1;padding:20px;padding-bottom:120px;}
+
+  .screen{display:none;}
+  .screen.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .eyebrow{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:12px;
+    letter-spacing:.16em;
+    color:var(--accent-dark);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .eyebrow .badge{
+    width:22px;height:22px;border-radius:50%;
+    background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;
+  }
+  h2.screen-title{
+    margin:0 0 4px;
+    font-size:22px;
+    font-weight:900;
+  }
+  p.screen-sub{
+    margin:0 0 20px;
+    color:var(--ink-soft);
+    font-size:14px;
+    line-height:1.6;
+  }
+
+  /* Step 1: product picker */
+  .product-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--surface);
+    border:2px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:14px;
+    cursor:pointer;
+    transition:border-color .15s, transform .1s;
+  }
+  .product-card:active{transform:scale(.98);}
+  .product-card.selected{
+    border-color:var(--accent);
+    background:#FDF3F1;
+  }
+  .product-card .icon{
+    width:60px;height:52px;flex:none;
+    border-radius:10px;
+    background:var(--navy);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;letter-spacing:.02em;
+  }
+  .product-card.selected .icon{background:var(--accent);}
+  .product-card .txt strong{display:block;font-size:16px;font-weight:700;}
+  .product-card .txt span{font-size:13px;color:var(--ink-soft);}
+
+  /* Form */
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:6px;
+    color:var(--navy);
+  }
+  .field label .req{color:var(--accent);margin-left:2px;}
+  .field input[type=text],
+  .field input[type=tel],
+  .field select{
+    width:100%;
+    padding:13px 14px;
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    font-size:15px;
+    font-family:inherit;
+    background:var(--surface);
+    color:var(--ink);
+  }
+  .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  .upload-box{
+    border:1.5px dashed var(--line);
+    border-radius:10px;
+    padding:16px;
+    text-align:center;
+    background:var(--surface);
+    position:relative;
+  }
+  .upload-box.has-img{padding:8px;}
+  .upload-box img{max-width:100%;max-height:180px;border-radius:8px;display:block;margin:0 auto;}
+  .upload-box .cta{font-size:13px;color:var(--ink-soft);}
+  .upload-box .cta strong{color:var(--accent-dark);}
+  .upload-box input[type=file]{
+    position:absolute;inset:0;opacity:0;cursor:pointer;
+  }
+
+  .declare-box{
+    background:#FFF9EC;
+    border:1.5px solid #F0DFAE;
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:13.5px;
+    line-height:1.8;
+    color:#5A4A1E;
+    margin-bottom:18px;
+  }
+  .declare-box b{color:var(--accent-dark);}
+
+  .sign-wrap{
+    background:var(--surface);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  #signPad{display:block;width:100%;height:160px;touch-action:none;background:#fff;}
+  .sign-tools{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:8px 12px;border-top:1px dashed var(--line);
+  }
+  .sign-tools .hint{font-size:12px;color:var(--ink-soft);}
+  .sign-tools button{
+    border:none;background:none;color:var(--accent-dark);
+    font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;
+  }
+
+  .agree-row{
+    display:flex;align-items:flex-start;gap:10px;
+    margin:16px 0 4px;
+    font-size:13px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+  .agree-row input{width:18px;height:18px;flex:none;margin-top:2px;}
+
+  /* Footer / CTA bar */
+  .footer-bar{
+    position:fixed;left:0;right:0;bottom:0;
+    max-width:520px;margin:0 auto;
+    background:linear-gradient(180deg, rgba(245,242,236,0) 0%, var(--bg) 30%);
+    padding:22px 20px 18px;
+  }
+  .btn{
+    display:block;width:100%;
+    padding:16px;
+    border:none;border-radius:12px;
+    font-family:inherit;font-size:16px;font-weight:700;
+    cursor:pointer;text-align:center;
+  }
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:disabled{background:#D9B6B9;color:#fff;cursor:not-allowed;}
+  .btn-ghost{background:none;color:var(--ink-soft);font-weight:500;font-size:14px;padding:10px;margin-top:6px;}
+
+  /* Success screen */
+  .success-wrap{
+    text-align:center;
+    padding:60px 10px 0;
+  }
+  .success-wrap .check{
+    width:72px;height:72px;border-radius:50%;
+    background:var(--ok);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 20px;font-size:34px;
+  }
+  .success-wrap h2{font-size:20px;margin:0 0 10px;}
+  .success-wrap p{color:var(--ink-soft);font-size:14px;line-height:1.7;}
+  .success-summary{
+    margin-top:24px;text-align:left;
+    background:var(--surface);border:1.5px solid var(--line);
+    border-radius:12px;padding:16px;font-size:13.5px;
+  }
+  .success-summary div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);}
+  .success-summary div:last-child{border-bottom:none;}
+  .success-summary span:first-child{color:var(--ink-soft);}
+  .success-summary span:last-child{font-weight:700;}
+
+  .loading-wrap{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:80vh;gap:16px;color:var(--ink-soft);font-size:14px;
+  }
+  .spinner{
+    width:34px;height:34px;border-radius:50%;
+    border:3px solid var(--line);border-top-color:var(--accent);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- LOADING -->
+  <div id="screen-loading" class="loading-wrap">
+    <div class="spinner"></div>
+    <div>頁面載入中，請稍候…</div>
+  </div>
+
+  <div id="shell" style="display:none;">
+    <header class="topbar">
+      <div class="brand">YAMAHA · 原廠內召修登記</div>
+      <h1 id="storeName">原廠部品更換登記</h1>
+    </header>
+
+    <div class="steps-track">
+      <div class="seg" id="seg1"></div>
+      <div class="seg" id="seg2"></div>
+    </div>
+
+    <main>
+      <!-- STEP 1：選擇更換內容 -->
+      <section id="screen-step1" class="screen">
+        <div class="eyebrow"><span class="badge">1</span>選擇項目</div>
+        <h2 class="screen-title">請選擇本次內召修項目</h2>
+        <p class="screen-sub">請確認欲登記預定的零件項目，選擇後可繼續填寫資料。</p>
+
+        <div class="product-card" data-value="CCU接收器">
+          <div class="icon num">CCU</div>
+          <div class="txt">
+            <strong>CCU 接收器</strong>
+            <span>藍牙連接單元內召修更換</span>
+          </div>
+        </div>
+
+        <div class="product-card" data-value="七代勁戰儀表">
+          <div class="icon num">SCREEN</div>
+          <div class="txt">
+            <strong>七代勁戰儀表</strong>
+            <span>儀表總成內召修更換</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 2：資料填寫 -->
+      <section id="screen-step2" class="screen">
+        <div class="eyebrow"><span class="badge">2</span>登記資料</div>
+        <h2 class="screen-title">填寫車主與車輛資料</h2>
+        <p class="screen-sub">請填寫以下資料，並於最後簽名確認。</p>
+
+        <div class="field">
+          <label>登記店家<span class="req">*</span></label>
+          <select id="f-store">
+            <option value="">請選擇店家</option>
+            <option value="金旺昇">金旺昇</option>
+            <option value="忍店">忍店</option>
+            <option value="金力盛">金力盛</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>客戶姓名<span class="req">*</span></label>
+          <input type="text" id="f-name" placeholder="請輸入姓名">
+        </div>
+
+        <div class="field">
+          <label>聯絡電話<span class="req">*</span></label>
+          <input type="tel" id="f-phone" placeholder="請輸入手機號碼">
+        </div>
+
+        <div class="field">
+          <label>車牌號碼<span class="req">*</span></label>
+          <input type="text" id="f-plate" placeholder="例：ABC-1234">
+        </div>
+
+        <div class="field">
+          <label>行照照片<span class="req">*</span></label>
+          <div class="upload-box" id="uploadBox">
+            <div class="cta" id="uploadCta">點擊拍照或選擇照片<br><strong>請確保車牌與車主姓名清晰可見</strong></div>
+            <img id="uploadPreview" style="display:none;">
+            <input type="file" id="f-photo" accept="image/*" capture="environment">
+          </div>
+        </div>
+
+        <div class="declare-box" id="declareBox">
+          本人已了解上述車輛因原廠部品品質原因，需更換<b id="declareItem">「＿＿＿」</b>，
+          並同意由店家協助登記預定材料，待材料到貨後由店家通知安排更換作業。
+        </div>
+
+        <div class="field">
+          <label>客戶簽名<span class="req">*</span></label>
+          <div class="sign-wrap">
+            <canvas id="signPad"></canvas>
+            <div class="sign-tools">
+              <span class="hint">請於上方框內簽名</span>
+              <button type="button" id="clearSign">清除重簽</button>
+            </div>
+          </div>
+        </div>
+
+        <label class="agree-row">
+          <input type="checkbox" id="f-agree">
+          <span>我已詳閱並同意上方聲明內容，確認以上資料填寫屬實。</span>
+        </label>
+      </section>
+
+      <!-- SUCCESS -->
+      <section id="screen-success" class="screen">
+        <div class="success-wrap">
+          <div class="check">✓</div>
+          <h2>登記完成</h2>
+          <p>您的內召修材料預定申請已送出，<br>店家收到材料後將透過 LINE 通知您安排更換。<br>確認書 PDF 將於稍後傳送至此對話。</p>
+          <div class="success-summary" id="summaryBox"></div>
+        </div>
+      </section>
+    </main>
+
+    <div class="footer-bar">
+      <button class="btn btn-primary" id="btnNext1" style="display:none;" disabled>下一步</button>
+      <button class="btn btn-primary" id="btnSubmit" style="display:none;" disabled>送出登記</button>
+      <button class="btn btn-ghost" id="btnBack" style="display:none;">上一步</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========= 設定區：請填入實際值 ========= */
+const LIFF_ID = "REPLACE_WITH_YOUR_LIFF_ID";           // TODO: 貼上 LINE Developers 後台的 LIFF ID
+const WEBHOOK_URL = "REPLACE_WITH_YOUR_MAKE_WEBHOOK_URL"; // TODO: 貼上 Make 的 Webhook URL
+/* ======================================== */
+
+const state = {
+  product: null,
+  lineUserId: null,
+  lineDisplayName: null,
+  photoBase64: null,
+  signBase64: null,
+};
+
+const screens = {
+  step1: document.getElementById('screen-step1'),
+  step2: document.getElementById('screen-step2'),
+  success: document.getElementById('screen-success'),
+};
+const seg1 = document.getElementById('seg1');
+const seg2 = document.getElementById('seg2');
+const btnNext1 = document.getElementById('btnNext1');
+const btnSubmit = document.getElementById('btnSubmit');
+const btnBack = document.getElementById('btnBack');
+
+function showScreen(name){
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[name].classList.add('active');
+
+  btnNext1.style.display = name === 'step1' ? 'block' : 'none';
+  btnSubmit.style.display = name === 'step2' ? 'block' : 'none';
+  btnBack.style.display = name === 'step2' ? 'block' : 'none';
+
+  seg1.className = 'seg ' + (name === 'step1' ? 'active' : 'done');
+  seg2.className = 'seg ' + (name === 'step2' ? 'active' : (name === 'success' ? 'done' : ''));
+}
+
+/* ---- Step 1：產品選擇 ---- */
+document.querySelectorAll('.product-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    state.product = card.dataset.value;
+    btnNext1.disabled = false;
+  });
+});
+
+btnNext1.addEventListener('click', () => {
+  document.getElementById('declareItem').textContent = state.product;
+  showScreen('step2');
+});
+btnBack.addEventListener('click', () => showScreen('step1'));
+
+/* ---- Step 2：表單驗證 ---- */
+const fStore = document.getElementById('f-store');
+const fName = document.getElementById('f-name');
+const fPhone = document.getElementById('f-phone');
+const fPlate = document.getElementById('f-plate');
+const fAgree = document.getElementById('f-agree');
+[fStore, fName, fPhone, fPlate, fAgree].forEach(el => {
+  el.addEventListener('input', validateForm);
+  el.addEventListener('change', validateForm);
+});
+
+/* 行照照片上傳 */
+const uploadBox = document.getElementById('uploadBox');
+const uploadPreview = document.getElementById('uploadPreview');
+const uploadCta = document.getElementById('uploadCta');
+document.getElementById('f-photo').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    state.photoBase64 = ev.target.result;
+    uploadPreview.src = ev.target.result;
+    uploadPreview.style.display = 'block';
+    uploadCta.style.display = 'none';
+    uploadBox.classList.add('has-img');
+    validateForm();
+  };
+  reader.readAsDataURL(file);
+});
+
+/* 簽名板 */
+const canvas = document.getElementById('signPad');
+const ctx = canvas.getContext('2d');
+let drawing = false, hasSignature = false;
+
+function resizeCanvas(){
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * ratio;
+  canvas.height = rect.height * ratio;
+  ctx.scale(ratio, ratio);
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#1B1B1D';
+}
+window.addEventListener('resize', resizeCanvas);
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+}
+function startDraw(e){ drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }
+function moveDraw(e){
+  if(!drawing) return;
+  const p = getPos(e);
+  ctx.lineTo(p.x, p.y); ctx.stroke();
+  hasSignature = true;
+  validateForm();
+  e.preventDefault();
+}
+function endDraw(){ drawing = false; }
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', moveDraw);
+window.addEventListener('mouseup', endDraw);
+canvas.addEventListener('touchstart', startDraw);
+canvas.addEventListener('touchmove', moveDraw);
+canvas.addEventListener('touchend', endDraw);
+
+document.getElementById('clearSign').addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hasSignature = false;
+  validateForm();
+});
+
+function validateForm(){
+  const ok = fStore.value && fName.value.trim() && fPhone.value.trim() &&
+             fPlate.value.trim() && fAgree.checked && state.photoBase64 && hasSignature;
+  btnSubmit.disabled = !ok;
+}
+
+/* ---- 送出 ---- */
+btnSubmit.addEventListener('click', async () => {
+  btnSubmit.disabled = true;
+  btnSubmit.textContent = '送出中…';
+
+  state.signBase64 = canvas.toDataURL('image/png');
+
+  const payload = {
+    lineUserId: state.lineUserId,
+    lineDisplayName: state.lineDisplayName,
+    product: state.product,
+    store: fStore.value,
+    name: fName.value.trim(),
+    phone: fPhone.value.trim(),
+    plate: fPlate.value.trim(),
+    registeredAt: new Date().toISOString(),
+    licensePhoto: state.photoBase64,
+    signature: state.signBase64,
+  };
+
+  try{
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    // 即使 res 不是 200，仍先以本地資料顯示完成畫面；實際錯誤處理可依 Make 回傳格式調整
+  }catch(err){
+    console.error('送出失敗', err);
+  }
+
+  document.getElementById('summaryBox').innerHTML = `
+    <div><span>更換項目</span><span>${state.product}</span></div>
+    <div><span>登記店家</span><span>${fStore.value}</span></div>
+    <div><span>客戶姓名</span><span>${fName.value.trim()}</span></div>
+    <div><span>車牌號碼</span><span>${fPlate.value.trim()}</span></div>
+  `;
+  showScreen('success');
+});
+
+/* ---- LIFF 初始化 ---- */
+async function initLiff(){
+  try{
+    await liff.init({ liffId: LIFF_ID });
+    if(!liff.isLoggedIn()){
+      liff.login();
+      return;
+    }
+    const profile = await liff.getProfile();
+    state.lineUserId = profile.userId;
+    state.lineDisplayName = profile.displayName;
+  }catch(err){
+    console.error('LIFF 初始化失敗', err);
+    // 開發預覽階段（非 LINE 環境）容許繼續瀏覽表單
+  }finally{
+    document.getElementById('screen-loading').style.display = 'none';
+    document.getElementById('shell').style.display = 'block';
+    resizeCanvas();
+    showScreen('step1');
+  }
+}
+initLiff();
+</script>
+</body>
+</html>
