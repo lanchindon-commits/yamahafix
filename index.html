@@ -468,23 +468,43 @@ const fAgree = document.getElementById('f-agree');
   el.addEventListener('change', validateForm);
 });
 
-/* 行照照片上傳 */
+/* 行照照片上傳（先壓縮再轉base64，避免手機原始高解析度照片讓PDF產生失敗） */
 const uploadBox = document.getElementById('uploadBox');
 const uploadPreview = document.getElementById('uploadPreview');
 const uploadCta = document.getElementById('uploadCta');
+
+function compressAndConvert(file, callback){
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX_SIZE = 1200;
+      let w = img.width, h = img.height;
+      if(w > MAX_SIZE || h > MAX_SIZE){
+        if(w > h){ h = Math.round(h * MAX_SIZE / w); w = MAX_SIZE; }
+        else{ w = Math.round(w * MAX_SIZE / h); h = MAX_SIZE; }
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(c.toDataURL('image/jpeg', 0.75));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 document.getElementById('f-photo').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    state.photoBase64 = ev.target.result;
-    uploadPreview.src = ev.target.result;
+  compressAndConvert(file, (dataUrl) => {
+    state.photoBase64 = dataUrl;
+    uploadPreview.src = dataUrl;
     uploadPreview.style.display = 'block';
     uploadCta.style.display = 'none';
     uploadBox.classList.add('has-img');
     validateForm();
-  };
-  reader.readAsDataURL(file);
+  });
 });
 
 /* 簽名板 */
@@ -646,7 +666,7 @@ btnSubmit.addEventListener('click', async () => {
     pdfUrl = await uploadPdfToSupabase(pdfBlob, filename);
   }catch(err){
     console.error('PDF 產生或上傳失敗', err);
-    alert('確認書 PDF 產生失敗，請確認網路連線後再試一次。');
+    alert('確認書 PDF 產生失敗：' + (err && err.message ? err.message : '請確認網路連線後再試一次。'));
     btnSubmit.disabled = false;
     btnSubmit.textContent = '送出登記';
     return;
