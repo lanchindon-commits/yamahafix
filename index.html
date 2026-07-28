@@ -385,7 +385,7 @@
         <div class="success-wrap">
           <div class="check">✓</div>
           <h2>登記完成</h2>
-          <p>您的內召修材料預定申請已送出，<br>店家收到材料後將透過 LINE 通知您安排更換。<br>確認書 PDF 將於稍後傳送至此對話。</p>
+          <p>您的內部品材料預定申請已送出，<br>店家收到材料後將透過 LINE 通知您安排更換。<br>確認書 PDF 將於稍後傳送至此對話。</p>
           <div class="success-summary" id="summaryBox"></div>
         </div>
       </section>
@@ -576,14 +576,14 @@ async function generateConfirmationPDF({ store, name, phone, plate, product, reg
       <tr><td style="padding:8px 12px;background:#f4f2ec;font-weight:bold;border:1px solid #ccc;">車牌</td><td style="padding:8px 12px;border:1px solid #ccc;">${plate}</td></tr>
     </table>
 
-    <h4 style="color:#1D2B3A;margin:0 0 8px;font-size:15px;">召修內容</h4>
+    <h4 style="color:#1D2B3A;margin:0 0 8px;font-size:15px;">部品內容</h4>
     <div style="font-size:13.5px;margin-bottom:16px;">
       <div style="padding:4px 0;"><span style="display:inline-block;width:16px;height:16px;border:1.5px solid #1a1a1a;text-align:center;line-height:14px;font-size:11px;font-weight:bold;margin-right:8px;">${product === 'CCU接收器' ? '✓' : ''}</span>CCU 接收器</div>
       <div style="padding:4px 0;"><span style="display:inline-block;width:16px;height:16px;border:1.5px solid #1a1a1a;text-align:center;line-height:14px;font-size:11px;font-weight:bold;margin-right:8px;">${product === '七代勁戰儀表' ? '✓' : ''}</span>七代勁戰儀表</div>
     </div>
 
     <div style="background:#FFF9EC;border:1.5px solid #F0DFAE;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:1.9;color:#5A4A1E;">
-      本人已了解上述車輛因原廠內召修需求，需更換「<b>${product}</b>」，並同意由店家協助登記預定材料，待材料到貨後由店家通知安排更換作業。
+      本人已了解上述車輛因原廠內部品需求，需更換「<b>${product}</b>」，並同意由店家協助登記預定材料，待材料到貨後由店家通知安排更換作業。
     </div>
 
     <div style="border-top:2px dashed #c5c0b4;padding-top:16px;">
