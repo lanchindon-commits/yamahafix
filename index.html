@@ -636,6 +636,40 @@ async function uploadPdfToSupabase(pdfBlob, filename){
   return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${filename}`;
 }
 
+/* ---- 立刻把「車牌 ↔ LINE userID」寫進 customers（與送出 Make.com 平行執行，不等待、不阻塞送出流程） ---- */
+async function bindLineUser(carNo){
+  if(!state.lineUserId){
+    console.warn('⚠️ 尚未取得 LINE userId，略過綁定 customers');
+    return;
+  }
+  if(!carNo || !carNo.trim()){
+    console.warn('⚠️ 車牌為空，略過綁定 customers');
+    return;
+  }
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/bind_line_user`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        p_car_no: carNo.trim(),
+        p_line_user_id: state.lineUserId,
+        p_line_display_name: state.lineDisplayName || null,
+      }),
+    });
+    if(!res.ok){
+      console.error('❌ bind_line_user 失敗:', await res.text());
+    }else{
+      console.log('✅ bind_line_user 成功');
+    }
+  }catch(err){
+    console.error('❌ bind_line_user 例外:', err);
+  }
+}
+
 /* ---- 送出 ---- */
 btnSubmit.addEventListener('click', async () => {
   btnSubmit.disabled = true;
@@ -648,6 +682,7 @@ btnSubmit.addEventListener('click', async () => {
   const registeredAtText = now.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
   const dateStamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
   const plateValue = fPlate.value.trim();
+  bindLineUser(plateValue); // 立刻寫入車牌↔LINE userID綁定，不等待、不阻塞送出
   // 淨化車牌文字，移除emoji/符號等Supabase檔名不允許的字元，只保留字母/數字/中文/底線/連字號
   const safePlate = plateValue.replace(/[^\p{L}\p{N}_-]/gu, '') || 'NA';
 
