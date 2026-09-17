@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>選擇到店時間</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{
+    --bg:#F5F2EC; --surface:#FFFFFF; --ink:#1B1B1D; --ink-soft:#63605B;
+    --line:#E3DFD6; --accent:#C81E2C; --accent-dark:#8F1420; --navy:#1D2B3A; --ok:#1F7A5C;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:'Noto Sans TC',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+
+  header{padding:18px 20px;background:var(--navy);color:#fff;}
+  header .brand{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;letter-spacing:.14em;color:#C9CFD8;text-transform:uppercase;}
+  header h1{margin:4px 0 0;font-size:19px;font-weight:900;}
+
+  main{flex:1;padding:20px;padding-bottom:110px;}
+
+  .info-card{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:22px;font-size:13.5px;line-height:1.9;}
+  .info-card div{display:flex;justify-content:space-between;}
+  .info-card span:first-child{color:var(--ink-soft);}
+  .info-card span:last-child{font-weight:700;}
+
+  .wheel-label{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+
+  .wheel-wrap{position:relative;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:0 4px;margin-bottom:22px;}
+  .wheel-highlight{position:absolute;left:4px;right:4px;top:50%;height:40px;transform:translateY(-50%);background:#FDF3F1;border-top:1.5px solid var(--accent);border-bottom:1.5px solid var(--accent);pointer-events:none;z-index:1;}
+  .wheel-row{display:flex;height:200px;}
+  .wheel-col{flex:1;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;position:relative;z-index:2;scrollbar-width:none;}
+  .wheel-col::-webkit-scrollbar{display:none;}
+  .wheel-col .pad{height:80px;flex:none;}
+  .wheel-item{height:40px;flex:none;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;font-size:15px;color:var(--ink-soft);transition:color .15s, font-weight .15s;}
+  .wheel-item.center{color:var(--ink);font-weight:700;font-size:16px;}
+
+  .preview{text-align:center;font-size:14px;color:var(--navy);font-weight:700;margin:-8px 0 22px;}
+
+  .footer-bar{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:linear-gradient(180deg, rgba(245,242,236,0) 0%, var(--bg) 30%);padding:22px 20px 18px;}
+  .btn{display:block;width:100%;padding:16px;border:none;border-radius:12px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;text-align:center;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:disabled{background:#D9B6B9;color:#fff;}
+
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  .success-wrap{text-align:center;padding:60px 10px 0;}
+  .success-wrap .check{width:72px;height:72px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:34px;}
+  .success-wrap h2{font-size:20px;margin:0 0 10px;}
+  .success-wrap p{color:var(--ink-soft);font-size:14px;line-height:1.7;}
+  .success-time{margin-top:20px;font-size:18px;font-weight:900;color:var(--navy);}
+
+  .loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;color:var(--ink-soft);font-size:14px;}
+  .spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div id="screen-loading" class="loading-wrap">
+  <div class="spinner"></div>
+  <div>頁面載入中，請稍候…</div>
+</div>
+
+<div id="app" style="display:none;">
+  <header>
+    <div class="brand">YAMAHA · 到店時間預約</div>
+    <h1>選擇到店時間</h1>
+  </header>
+
+  <main>
+    <section id="screen-pick" class="screen active">
+      <div class="info-card">
+        <div><span>客人</span><span id="infoName">—</span></div>
+        <div><span>車牌</span><span id="infoPlate">—</span></div>
+        <div><span>項目</span><span id="infoProduct">—</span></div>
+        <div><span>店家</span><span id="infoStore">—</span></div>
+      </div>
+
+      <div class="wheel-label">請選擇日期與時間</div>
+      <div class="wheel-wrap">
+        <div class="wheel-highlight"></div>
+        <div class="wheel-row">
+          <div class="wheel-col" id="colDate"></div>
+          <div class="wheel-col" id="colHour"></div>
+          <div class="wheel-col" id="colMin"></div>
+        </div>
+      </div>
+
+      <div class="preview" id="preview">請滑動選擇時間</div>
+    </section>
+
+    <section id="screen-success" class="screen">
+      <div class="success-wrap">
+        <div class="check">✓</div>
+        <h2>已送出到店時間</h2>
+        <p>店家已收到您安排的到店時間，<br>屆時請準時到店更換 😊</p>
+        <div class="success-time" id="successTime"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer-bar">
+    <button class="btn btn-primary" id="btnConfirm" disabled>確認送出</button>
+  </div>
+</div>
+
+<script>
+/* ========= 設定區：請填入實際值 ========= */
+const LIFF_ID = "REPLACE_WITH_YOUR_LIFF_ID";              // TODO: 貼上 LINE Developers 後台的 LIFF ID
+const WEBHOOK_URL = "REPLACE_WITH_YOUR_MAKE_WEBHOOK_URL"; // TODO: 貼上 Make 的 Webhook URL
+/* ======================================== */
+
+const params = new URLSearchParams(window.location.search);
+const ctx = {
+  id: params.get('id') || '',
+  name: params.get('name') || '',
+  plate: params.get('plate') || '',
+  product: params.get('product') || '',
+  store: params.get('store') || '',
+};
+
+document.getElementById('infoName').textContent = ctx.name || '—';
+document.getElementById('infoPlate').textContent = ctx.plate || '—';
+document.getElementById('infoProduct').textContent = ctx.product || '—';
+document.getElementById('infoStore').textContent = ctx.store || '—';
+
+/* ---- 滾輪資料 ---- */
+const WEEK = ['日','一','二','三','四','五','六'];
+const dateList = [];
+const today = new Date();
+for(let i=0;i<30;i++){
+  const d = new Date(today);
+  d.setDate(today.getDate()+i);
+  dateList.push({
+    value: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
+    label: `${d.getMonth()+1}月${d.getDate()}日(週${WEEK[d.getDay()]})`
+  });
+}
+const hourList = [];
+for(let h=9; h<=19; h++) hourList.push(String(h).padStart(2,'0'));
+const minList = ['00','10','20','30','40','50'];
+
+function buildColumn(el, items, getLabel){
+  el.innerHTML = '';
+  const padTop = document.createElement('div'); padTop.className='pad';
+  el.appendChild(padTop);
+  items.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'wheel-item';
+    row.dataset.index = idx;
+    row.textContent = getLabel(item);
+    el.appendChild(row);
+  });
+  const padBottom = document.createElement('div'); padBottom.className='pad';
+  el.appendChild(padBottom);
+}
+
+const colDate = document.getElementById('colDate');
+const colHour = document.getElementById('colHour');
+const colMin = document.getElementById('colMin');
+
+buildColumn(colDate, dateList, d => d.label);
+buildColumn(colHour, hourList, h => h + ' 時');
+buildColumn(colMin, minList, m => m + ' 分');
+
+const selected = { dateIdx: 0, hourIdx: 2, minIdx: 0 }; // 預設 11:00
+
+function updateCenter(col, idx){
+  col.querySelectorAll('.wheel-item').forEach(el => {
+    el.classList.toggle('center', Number(el.dataset.index) === idx);
+  });
+}
+
+function attachWheel(col, count, key, onSettle){
+  let timer = null;
+  col.addEventListener('scroll', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const idx = Math.max(0, Math.min(count-1, Math.round(col.scrollTop / 40)));
+      selected[key] = idx;
+      updateCenter(col, idx);
+      onSettle();
+    }, 120);
+  });
+}
+
+attachWheel(colDate, dateList.length, 'dateIdx', updatePreview);
+attachWheel(colHour, hourList.length, 'hourIdx', updatePreview);
+attachWheel(colMin, minList.length, 'minIdx', updatePreview);
+
+function updatePreview(){
+  const d = dateList[selected.dateIdx];
+  const h = hourList[selected.hourIdx];
+  const m = minList[selected.minIdx];
+  document.getElementById('preview').textContent = `您選擇的時間：${d.label} ${h}:${m}`;
+  document.getElementById('btnConfirm').disabled = false;
+}
+
+// 初始置中捲動（預設 11:00，日期第一筆）
+window.addEventListener('load', () => {
+  colDate.scrollTop = 0;
+  colHour.scrollTop = 2 * 40;
+  colMin.scrollTop = 0;
+  updateCenter(colDate, 0);
+  updateCenter(colHour, 2);
+  updateCenter(colMin, 0);
+  updatePreview();
+});
+
+/* ---- 送出 ---- */
+document.getElementById('btnConfirm').addEventListener('click', async () => {
+  const btn = document.getElementById('btnConfirm');
+  btn.disabled = true;
+  btn.textContent = '送出中…';
+
+  const d = dateList[selected.dateIdx];
+  const h = hourList[selected.hourIdx];
+  const m = minList[selected.minIdx];
+  const displayText = `${d.label} ${h}:${m}`;
+  const isoDateTime = `${d.value}T${h}:${m}:00+08:00`;
+
+  const payload = {
+    pageId: ctx.id,
+    name: ctx.name,
+    plate: ctx.plate,
+    product: ctx.product,
+    store: ctx.store,
+    appointmentAt: isoDateTime,
+    appointmentDisplay: displayText,
+    lineUserId: liffUserId || '',
+  };
+
+  try{
+    await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  }catch(err){
+    console.error('送出失敗', err);
+  }
+
+  document.getElementById('successTime').textContent = displayText;
+  document.getElementById('screen-pick').classList.remove('active');
+  document.getElementById('screen-success').classList.add('active');
+});
+
+/* ---- LIFF 初始化 ---- */
+let liffUserId = '';
+async function initLiff(){
+  try{
+    await liff.init({ liffId: LIFF_ID });
+    if(!liff.isLoggedIn()){ liff.login(); return; }
+    const profile = await liff.getProfile();
+    liffUserId = profile.userId;
+  }catch(err){
+    console.error('LIFF 初始化失敗', err);
+  }finally{
+    document.getElementById('screen-loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+}
+initLiff();
+</script>
+</body>
+</html>
