@@ -341,11 +341,11 @@
           </div>
         </div>
 
-        <div class="product-card" data-value="控制器">
+        <div class="product-card" data-value="大燈控制單元">
           <div class="icon num">CTRL</div>
           <div class="txt">
-            <strong>控制器</strong>
-            <span>AUGUR 大燈控制單元內部品更換</span>
+            <strong>大燈控制單元</strong>
+            <span>AUGUR 車款內部品更換</span>
           </div>
         </div>
       </section>
@@ -510,7 +510,7 @@ document.querySelectorAll('.product-card').forEach(card => {
 
 btnNext1.addEventListener('click', () => {
   document.getElementById('declareItem').textContent = state.product;
-  const isCtrl = state.product === '控制器';
+  const isCtrl = state.product === '大燈控制單元';
   document.getElementById('augurNotice').style.display = isCtrl ? 'block' : 'none';
   document.getElementById('recallCheck').style.display = isCtrl ? 'block' : 'none';
   document.getElementById('agreeText').textContent = isCtrl
@@ -522,7 +522,7 @@ btnNext1.addEventListener('click', () => {
 });
 btnBack.addEventListener('click', () => showScreen('step1'));
 
-/* ---- 控制器：原廠召回引擎號碼查詢 ---- */
+/* ---- 大燈控制單元：原廠召回引擎號碼查詢 ---- */
 const RECALL_QUERY_URL = 'https://www.yamaha-motor.com.tw/recall/recall-202611';
 document.getElementById('btnRecallQuery').addEventListener('click', () => {
   state.recallOpened = true;
@@ -638,7 +638,7 @@ document.getElementById('clearSign').addEventListener('click', () => {
 function validateForm(){
   const ok = fStore.value && fName.value.trim() && fPhone.value.trim() &&
              fPlate.value.trim() && fAgree.checked && state.photoBase64 && hasSignature &&
-             (state.product !== '控制器' || (fRecall.checked && state.recallOpened));
+             (state.product !== '大燈控制單元' || (fRecall.checked && state.recallOpened));
   btnSubmit.disabled = !ok;
 }
 
@@ -663,14 +663,14 @@ async function generateConfirmationPDF({ store, name, phone, plate, product, reg
     <div style="font-size:13.5px;margin-bottom:16px;">
       <div style="padding:4px 0;"><span style="display:inline-block;width:16px;height:16px;border:1.5px solid #1a1a1a;text-align:center;line-height:14px;font-size:11px;font-weight:bold;margin-right:8px;">${product === 'CCU接收器' ? '✓' : ''}</span>CCU 接收器</div>
       <div style="padding:4px 0;"><span style="display:inline-block;width:16px;height:16px;border:1.5px solid #1a1a1a;text-align:center;line-height:14px;font-size:11px;font-weight:bold;margin-right:8px;">${product === '七代勁戰儀表' ? '✓' : ''}</span>七代勁戰儀表</div>
-      <div style="padding:4px 0;"><span style="display:inline-block;width:16px;height:16px;border:1.5px solid #1a1a1a;text-align:center;line-height:14px;font-size:11px;font-weight:bold;margin-right:8px;">${product === '控制器' ? '✓' : ''}</span>控制器（AUGUR 大燈控制單元）</div>
+      <div style="padding:4px 0;"><span style="display:inline-block;width:16px;height:16px;border:1.5px solid #1a1a1a;text-align:center;line-height:14px;font-size:11px;font-weight:bold;margin-right:8px;">${product === '大燈控制單元' ? '✓' : ''}</span>大燈控制單元（AUGUR）</div>
     </div>
 
     <div style="background:#FFF9EC;border:1.5px solid #F0DFAE;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:1.9;color:#5A4A1E;">
       本人已了解上述車輛因原廠內部品需求，需更換「<b>${product}</b>」，並同意由店家協助登記預定材料，待材料到貨後由店家通知安排更換作業。
     </div>
 
-    ${product === '控制器' ? `
+    ${product === '大燈控制單元' ? `
     <div style="background:#FDF3F1;border:2px solid #C81E2C;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:1.9;color:#5E1119;">
       <div style="font-weight:bold;font-size:14px;color:#8F1420;margin-bottom:4px;">【重要告知事項】AUGUR 車款</div>
       <div>1. AUGUR 外殼拆卸後，外殼各部位之密合度皆會下降。</div>
